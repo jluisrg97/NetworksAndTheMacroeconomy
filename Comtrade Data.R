@@ -13,6 +13,9 @@
 # Libs----
 
 library(comtradr) # An API for UN Comtrade Data
+library(dplyr) # For data wrangling
+library(purrr) # For reduce
+
 
 # Data----
 
@@ -35,9 +38,9 @@ datacom <- ct_search(reporters = "USA" ,
                      end_date = "all")
 
 
-test_hs2012 <- hs2012[1:40] # Me quedo con 40 códigos para hacer los experimentos con el loop sin acabarme las queries :S
+test_hs2012 <- hs2012[1:800] # Me quedo con 40 códigos para hacer los experimentos con el loop sin acabarme las queries :S
 
-iteradores <- seq(1 , 40 , by = 20) # Para saltar los iteradores
+iteradores <- seq(1 , 800 , by = 20) # Para saltar los iteradores
 
 for (i in iteradores) {             # Para cada elemento de test_hs2012, hacer:
   name <- paste("comtrade" , i , sep = "_")  # Un objeto (que será data frame) que se llame comtrade_i, donde i
@@ -46,12 +49,16 @@ for (i in iteradores) {             # Para cada elemento de test_hs2012, hacer:
                       partners = c("Mexico" , "China") ,  # Assign se interpreta así:
                       trade_direction = "imports" ,       # assign(nombre del objeto a crear , valores del objeto)
                       freq = "annual" ,                   # Rasultado: Un data frame por iteración.
-                      commod_codes = test_hs2012[i:(i+19)] ,  # Extraer la serie del elemento i
-                      start_date = "all" ,            # Nota: Cuando las bases salen vacías es porque 
-                      end_date = "all"))              # nuestro código tiene dos ceros al final, es decir,
-                                                      # en el HS2012 solo se reconoce por los primeros 4 dígitos.
+                      commod_codes = test_hs2012[i:(i+19)] ,  # Extraer la serie del elemento i al i+19
+                      start_date = "all" ,             
+                      end_date = "all"))
+  
   Sys.sleep(1) # Para "dormir" el sistema un segundo                                     
-                                                      # Posteriormente arreglaremos eso.
+                                                      
   }
 
+comtrade_data <- lapply(ls(pattern = "comtrade_[0-9]+"), function(x) get(x)) # Para que R busque todos los objetos cuyo nombre
+                                                                            # comience por "comtrade_" 
+
+comtrade_data <- reduce(comtrade_data , bind_rows)
 
